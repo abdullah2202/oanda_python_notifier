@@ -1,0 +1,4 @@
+oandapyV20
+requests
+schedule
+python-dotenv
