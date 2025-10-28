@@ -23,16 +23,16 @@ cd project-directory
 ```
 
 ### 2. Create the .env File
-In the root oanda-scanner/ directory, create a file named .env. This file holds all the secret keys and configuration.
+In the root directory, create a file named `.env`. This file holds all the secret keys and configuration.
 
-3. Build the Docker Image
+### 3. Build the Docker Image
 From the project's root directory, run:
 ```bash
 docker build -t oanda-scanner .
 ```
 
-4. Run the Docker Container
-Run the image in detached mode, securely passing in the .env file:
+### 4. Run the Docker Container
+Run the image in detached mode, securely passing in the `.env` file:
 ```bash
 docker run --env-file .env -d --name my-oanda-bot oanda-scanner
 ```
@@ -60,7 +60,7 @@ docker rm my-oanda-bot
 This project is designed to be easily extendable. Follow these two steps:
 
 ### Step 1: Create the Strategy Class
-Open ```src/strategies.py``` and add a new class that inherits from ```Strategy```. You must implement all the abstract methods.
+Open `src/strategies.py` and add a new class that inherits from `Strategy`. You must implement all the abstract methods.
 
 Example Template:
 
@@ -72,7 +72,7 @@ class MyNewStrategy(Strategy):
     Checks for a simple 3-bar down close.
     """
     def __init__(self):
-        # 1. Define your properties
+        # 1. Define the properties
         self._instrument = "EUR_USD"
         self._timeframe = "H1"
         self._required_candles = 4 # Need 3 + 1 for indexing
@@ -97,7 +97,7 @@ class MyNewStrategy(Strategy):
         # This check prevents duplicate alerts for the same candle
         current_timestamp = candles[-1]['time']
         if current_timestamp == self.last_checked_timestamp:
-            return False # We've already checked this candle
+            return False # Already checked this candle
         
         # This is a new candle, so check it and update the state
         self.last_checked_timestamp = current_timestamp
@@ -108,7 +108,7 @@ class MyNewStrategy(Strategy):
         candle_2 = candles[-2]
         candle_3 = candles[-3]
 
-        # Your strategy logic
+        # Strategy logic
         is_bear_1 = float(candle_1['mid']['c']) < float(candle_1['mid']['o'])
         is_bear_2 = float(candle_2['mid']['c']) < float(candle_2['mid']['o'])
         is_bear_3 = float(candle_3['mid']['c']) < float(candle_3['mid']['o'])
@@ -121,12 +121,12 @@ class MyNewStrategy(Strategy):
         return False
 ```
 
-Step 2: Register the Strategy
-Open main.py. Import your new class and add an instance of it to the strategy_list.
+### Step 2: Register the Strategy
+Open `main.py`. Import the new class and add an instance of it to the `strategy_list`.
 
 ```python
 # ... other imports
-from src.strategies import EngulfingStrategy, MyNewStrategy  # <-- 1. Import it
+from src.strategies import EngulfingStrategy, MyNewStrategy 
 
 def main():
     # ...
@@ -135,7 +135,7 @@ def main():
     print("Initializing strategies...")
     strategy_list = [
         EngulfingStrategy(),
-        MyNewStrategy(),  # <-- 2. Add an instance here
+        MyNewStrategy(),
     ]
 
     # ...
