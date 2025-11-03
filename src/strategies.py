@@ -23,7 +23,12 @@ class Strategy(ABC):
     def required_candles(self):
         pass
 
-# --- Your Specific Strategy ---
+    @property
+    @abstractmethod
+    def min_required_completed_candles(self):
+        """Minimum *completed* candles needed for strategy logic (e.g., 4 for Candle 1-4)."""
+        pass
+
 
 class EngulfingStrategy(Strategy):
     """
@@ -36,7 +41,9 @@ class EngulfingStrategy(Strategy):
         self._instrument = "XAU_USD"
         self._timeframe = "M30"
         # Check candles 1, 2, 3, and 4
-        self._required_candles = 5  # Request 5 to be safe
+        self._required_candles = 6  # Request 5 to be safe
+        # We need candles 1, 2, 3, 4, so the minimum is 4 completed candles.
+        self._min_required_completed_candles = 4
         self.last_checked_timestamp = None
         print(f"EngulfingStrategy initialized for {self.instrument} ({self.timeframe})")
 
@@ -51,6 +58,10 @@ class EngulfingStrategy(Strategy):
     @property
     def required_candles(self):
         return self._required_candles
+
+    @property
+    def min_required_completed_candles(self):
+        return self._min_required_completed_candles
 
     def _get_candle_direction(self, candle):
         o = float(candle['mid']['o'])
@@ -69,7 +80,7 @@ class EngulfingStrategy(Strategy):
 
     def check(self, candles):
         # Ensure enough data
-        if len(candles) < self.required_candles:
+        if len(candles) < self.min_required_completed_candles:
             print("Not enough candle data to check strategy.")
             return False
         
