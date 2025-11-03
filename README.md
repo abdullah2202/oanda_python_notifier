@@ -23,7 +23,7 @@ cd project-directory
 ```
 
 ### 2. Create the .env File
-In the root directory, create a file named `.env`. This file holds all the secret keys and configuration.
+In the root directory, create a file named `.env`. This file holds all the secret keys and configuration. A sample file has been added `.env_sample`. You can use this file and rename it to `.env`.
 
 ### 3. Build the Docker Image
 From the project's root directory, run:
