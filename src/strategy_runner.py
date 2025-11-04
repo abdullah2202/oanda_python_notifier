@@ -7,7 +7,7 @@ class StrategyRunner:
         self.notifier = notifier
         self.strategies = strategies
         print(f"StrategyRunner initialized with {len(strategies)} strategies.")
-        self.notifier.send_notification({"Initialised" : "bot started"})
+        self.notifier.send_notification({"strategy":"Bot initialised"})
 
     def run_checks(self):
         """
