@@ -14,7 +14,7 @@ class StrategyRunner:
         Iterates through each strategy, fetches its required data,
         and runs its check method.
         """
-        print("--- Running checks... ---")
+        # print("--- Running checks... ---")
         for strategy in self.strategies:
             try:
                 candles = self.connector.get_candles(
