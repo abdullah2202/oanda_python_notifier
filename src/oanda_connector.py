@@ -28,5 +28,6 @@ class OandaConnector:
             completed_candles = [c for c in r.response.get('candles', []) if c['complete']]
             return completed_candles
         except oandapyV20.exceptions.V20Error as err:
-            print(f"OANDA API Error: {err}")
+            error = err[:100]  # Limit the error to a max of 100 characters to stop full webpages being outputted to cli
+            print(f"OANDA API Error: {error}")
             return None
