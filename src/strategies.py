@@ -1,4 +1,8 @@
 from abc import ABC, abstractmethod
+import math
+
+# Value of 1 pip. Adjust for different instruments
+PIP_SIZE = 0.01
 
 class Strategy(ABC):
     """
@@ -6,6 +10,7 @@ class Strategy(ABC):
     """
     @abstractmethod
     def check(self, candles):
+        """Returns (is_strategy_met: bool, notification_detail: str)"""
         pass
 
     @property
@@ -113,22 +118,22 @@ class EngulfingStrategy(Strategy):
 
         if dir_2 == 'doji' or dir_3 == 'doji' or dir_4 == 'doji':
             print("Strategy fail: Doji found in candles 2-4.")
-            return False
+            return False, "No Engulfing Pattern"
 
         if not (dir_2 == dir_3 == dir_4):
             print(f"Strategy fail: Candles 2-4 not same direction ({dir_4}, {dir_3}, {dir_2})")
-            return False
+            return False, "No Engulfing Pattern"
         
         # 2. Candle 1 is opposite direction
         dir_1 = self._get_candle_direction(candle_1)
         
         if dir_1 == 'doji':
             print("Strategy fail: Candle 1 is a doji.")
-            return False
+            return False, "No Engulfing Pattern"
 
         if dir_1 == dir_2:
             print(f"Strategy fail: Candle 1 ({dir_1}) same direction as Candle 2 ({dir_2})")
-            return False
+            return False, "No Engulfing Pattern"
         
         # 3. Candle 1's body > Candle 2's body
         body_1 = self._get_body_size(candle_1)
@@ -136,8 +141,8 @@ class EngulfingStrategy(Strategy):
 
         if body_1 <= body_2:
             print(f"Strategy fail: Candle 1 body ({body_1}) not > Candle 2 body ({body_2})")
-            return False
+            return False, "No Engulfing Pattern"
         
         # All conditions are met
         print(f"*** STRATEGY MET: EngulfingPattern on {self.instrument} ***")
-        return True
+        return True, "Engulfing Pattern Found"
