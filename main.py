@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 # Import custom modules
 from src.oanda_connector import OandaConnector
 from src.webhook_notifier import WebhookNotifier
-from src.strategies import EngulfingStrategy
+from src.strategies import EngulfingStrategy, SRBreakout
 from src.strategy_runner import StrategyRunner
 
 def main():
@@ -23,15 +23,16 @@ def main():
         print("Initializing strategies...")
         strategy_list = [
             EngulfingStrategy(),
+            SRBreakout(),
         ]
 
         runner = StrategyRunner(connector, notifier, strategy_list)
 
         print("Scheduling job to run every 1 minute.")
         # Run the check once immediately, then every minute
-        runner.run_checks() 
+        runner._run_all_checks() 
         
-        schedule.every(1).minute.do(runner.run_checks)
+        schedule.every(1).minute.do(runner._run_all_checks)
 
         print("Scheduler started. Waiting for jobs... (Press Ctrl+C to stop)")
         while True:
