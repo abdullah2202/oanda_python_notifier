@@ -1,6 +1,6 @@
 # OANDA V20 Strategy Scanner Bot
 
-This is a modular Python application designed to scan the OANDA V20 API for specific trading strategies. It runs on a one-minute schedule and sends a notification to a specified webhook when a strategy's conditions are met.
+This is a modular Python application designed to scan the OANDA V20 API for specific trading strategies. It supports two modes: real-time (live) scanning for alerts, and high-speed backtesting over historical data.
 
 The entire application is packaged to run inside a Docker container.
 
@@ -8,10 +8,10 @@ The entire application is packaged to run inside a Docker container.
 
 * **Modular OOP Design:** New strategies can be added by creating new classes that inherit from the `Strategy` base class.
 * **OANDA V20 API:** Uses the `oandapyV20` library for communication with the OANDA API.
-* **Webhook Alerts:** Sends a JSON payload to any webhook URL when a trading setup is identified.
-* **Scheduled Scans:** Uses the `schedule` library to run checks every minute.
+* **Webhook Alerts:** Sends a JSON payload to any webhook URL when a trading setup is identified (live mode only).
+* **Backtesting Engine:** Rapidly simulates strategy performance over historical data using specified date ranges.
+* **Command-Line Control:** Uses argparse to switch easily between live and backtest modes.
 * **Docker Ready:** Includes a `Dockerfile` for containerized deployment.
-* **State-Aware:** Strategies include logic to prevent sending duplicate alerts for the same candle.
 
 ## Setup and Installation
 
