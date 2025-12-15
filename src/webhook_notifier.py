@@ -9,10 +9,11 @@ class WebhookNotifier:
         parse_mode: "Markdown", "HTML", or None
         """
         self.url = os.getenv("WEBHOOK_URL")  # Should include bot token + /sendMessage
+        self.chat_id = os.getenv("TELEGRAM_CHAT_ID")
         self.parse_mode = parse_mode
 
-        if not self.url:
-            print("WARNING: WEBHOOK_URL not set. Notifications will be printed to console.")
+        if not self.url or not self.chat_id:
+            print("WARNING: WEBHOOK_URL AND/OR CHAT_ID not set. Notifications will be printed to console.")
 
     def send_notification(self, payload, keyboard_buttons=None):
         """
@@ -53,6 +54,7 @@ class WebhookNotifier:
 
         # Telegram expects POST JSON payload
         telegram_payload = {
+            "chat_id": self.chat_id,
             "text": message_content,
             "parse_mode": self.parse_mode,
         }
@@ -71,4 +73,9 @@ class WebhookNotifier:
             response.raise_for_status()
             print(f"Successfully sent Telegram alert: {payload.get('strategy')}")
         except requests.exceptions.RequestException as e:
-            print(f"Error sending Telegram message: {e}")
+            try:
+                error_details = response.json()
+                print(f"Error sending Telegram message: {e}")
+                print(f"Telegram API Response: {error_details}")
+            except (AttributeError, json.JSONDecodeError):
+                print(f"Error sending Telegram message: {e}. No JSON response available.")
