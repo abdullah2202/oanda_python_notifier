@@ -18,7 +18,7 @@ The entire application is packaged to run inside a Docker container.
 ### 1. Clone the Repository
 
 ```bash
-git clone <this-repos-url>
+git clone https://github.com/abdullah2202/oanda_python_notifier.git
 cd project-directory
 ```
 
@@ -32,7 +32,7 @@ docker build -t oanda-scanner .
 ```
 
 ## Running the Bot
-The `main.py` script now uses a `--mode` argument to switch between the two primary functions.
+The `main.py` script uses a `--mode` argument to switch between the two primary functions.
 
 ### 1. Live Scanning Mode (Default)
 In this mode, the bot uses `schedule` to run a check every minute. It fetches the latest candles, checks your strategies, and sends webhook alerts if a signal is generated.
@@ -105,7 +105,7 @@ docker rm my-oanda-bot
 ```
 
 ## How to Add a New Strategy
-This project is designed to be easily extendable. The base class now automatically handles the `instrument` and `timeframe` you pass to it.
+This project is designed to be easily extendable. The base class automatically handles the `instrument` and `timeframe` you pass to it.
 
 ### Step 1: Create the Strategy Class
 Open the relevant strategy file (e.g., `src/strategies.py` or a dedicated file like `src/my_strategy.py`) and add a new class that inherits from `Strategy`.
