@@ -31,23 +31,71 @@ From the project's root directory, run:
 docker build -t oanda-scanner .
 ```
 
-### 4. Run the Docker Container
-Run the image in detached mode, securely passing in the `.env` file:
+## Running the Bot
+The `main.py` script now uses a `--mode` argument to switch between the two primary functions.
+
+### 1. Live Scanning Mode (Default)
+In this mode, the bot uses `schedule` to run a check every minute. It fetches the latest candles, checks your strategies, and sends webhook alerts if a signal is generated.
+
+Command:
+
 ```bash
-docker run --env-file .env -d --name my-oanda-bot oanda-scanner
+docker run --env-file .env -d --name my-oanda-bot oanda-scanner --mode live
+```
+*Note: If you omit `--mode live`, it defaults to this behaviour.*
+
+### 2. Backtesting Mode (High-Speed Simulation)
+This mode runs the simulation instantly over a historical data range. It requires specific arguments to define a test.
+
+*Require Date Formats: Dates must be in OANDA's required ISO 8601 format: `YYY-MM-DDTHH:MM:SSZ` (e.g., `2023-10-01T00:00:00Z`)
+
+#### Command Structure
+
+```bash
+docker run --env-file .env --rm --name backtest-run oanda-scanner \
+  --mode backtest \
+  --instrument <INSTRUMENT> \
+  --start-date <START_DATE_ISO8601> \
+  --end-date <END_DATE_ISO8601> \
+  --strategies <LIST_OF_STRATEGIES> 
 ```
 
-The bot is now running in the background.
+#### Example (Running two specific strategies)
+
+```bash 
+docker run --env-file .env --rm --name backtest-run oanda-scanner \
+  --mode backtest \
+  --instrument XAU_USD \
+  --timeframe M30 \
+  --start-date 2023-11-01T00:00:00Z \
+  --end-date 2023-11-30T00:00:00Z \
+  --strategies EngulfingStrategy SRBreakout
+```
+
+#### Example (Running all registered strategies)
+
+```bash
+docker run --env-file .env --rm --name backtest-run-all oanda-scanner \
+  --mode backtest \
+  --instrument EUR_USD \
+  --timeframe H4 \
+  --start-date 2022-01-01T00:00:00Z \
+  --end-date 2023-01-01T00:00:00Z \
+  --strategies all
+```
+
+*Note: The `--rm` flag automatically cleans up the container after the backtest is complete*
+
 
 ## Managing the Bot
 ### Viewing Logs
-To see the real-time output of the bot, including print statements and strategy checks:
+To see the real-time output of the bot (live-mode) or the backtest results:
 ```bash
 docker logs -f my-oanda-bot
 ```
 
-### Stopping the Bot
-To stop and remove the container:
+### Stopping the Bot (Live-Mode)
+To stop and remove the container running in live mode:
 ```bash
 # Stop the running container
 docker stop my-oanda-bot
@@ -57,51 +105,45 @@ docker rm my-oanda-bot
 ```
 
 ## How to Add a New Strategy
-This project is designed to be easily extendable. Follow these two steps:
+This project is designed to be easily extendable. The base class now automatically handles the `instrument` and `timeframe` you pass to it.
 
 ### Step 1: Create the Strategy Class
-Open `src/strategies.py` and add a new class that inherits from `Strategy`. You must implement all the abstract methods.
+Open the relevant strategy file (e.g., `src/strategies.py` or a dedicated file like `src/my_strategy.py`) and add a new class that inherits from `Strategy`.
+
+#### Important Changes:
+
+1. Use `super().__init__(instrument, timeframe)`: Pass the arguments up to the parent.
+
+2. Override attributes directly: Define `self.required_candles` and `self.min_required_completed_candles` directly on `self`. Do not use private attributes (`_`) or `@property` decorators for these four attributes, as they are now handled by the base class.
+
 
 Example Template:
 
 ```python
-from src.strategies import Strategy # Import the base class
+from .base_strategy import Strategy
 
 class MyNewStrategy(Strategy):
     """
     Checks for a simple 3-bar down close.
     """
-    def __init__(self):
-        # 1. Define the properties
-        self._instrument = "EUR_USD"
-        self._timeframe = "H1"
-        self._required_candles = 4 # Need 3 + 1 for indexing
-        self.last_checked_timestamp = None
+    # 1. Implement the required constructor
+    def __init__(self, instrument, timeframe):
+        super().__init__(instrument, timeframe) 
+        
+        # 2. Override the base class defaults
+        self.required_candles = 4 # Total candles to request (3 completed + 1 for safety/indexing)
+        self.min_required_completed_candles = 3 # Minimum needed for logic
+        
+        # NOTE: last_checked_timestamp logic has been moved to the StrategyRunner/Backtester
+        
         print(f"MyNewStrategy initialized for {self.instrument} ({self.timeframe})")
-
-    # 2. Implement the abstract properties
-    @property
-    def instrument(self):
-        return self._instrument
-
-    @property
-    def timeframe(self):
-        return self._timeframe
-
-    @property
-    def required_candles(self):
-        return self._required_candles
 
     # 3. Implement the core check logic
     def check(self, candles):
-        # This check prevents duplicate alerts for the same candle
-        current_timestamp = candles[-1]['time']
-        if current_timestamp == self.last_checked_timestamp:
-            return False # Already checked this candle
-        
-        # This is a new candle, so check it and update the state
-        self.last_checked_timestamp = current_timestamp
-        print(f"\nChecking MyNewStrategy: {current_timestamp}")
+        # The StrategyRunner/Backtester handles the new candle check, so no timestamp logic needed here.
+
+        if len(candles) < self.min_required_completed_candles:
+             return False, "Not enough candles."
         
         # OANDA candles: candles[-1] is the most recent completed candle
         candle_1 = candles[-1]
@@ -114,34 +156,30 @@ class MyNewStrategy(Strategy):
         is_bear_3 = float(candle_3['mid']['c']) < float(candle_3['mid']['o'])
 
         if is_bear_1 and is_bear_2 and is_bear_3:
-            print(f"*** STRATEGY MET: MyNewStrategy on {self.instrument} ***")
-            return True # Condition met
+            return True, "3 Consecutive Bear Candles Detected."
         
-        print("Strategy fail: Not 3 bear candles.")
-        return False
+        return False, "No 3 bear candles."
 ```
 
 ### Step 2: Register the Strategy
-Open `main.py`. Import the new class and add an instance of it to the `strategy_list`.
+Open `main.py` and ensure your new strategy class is imported and registered in the `all_strategies` dictionary within the `get_strategies` function:
 
 ```python
 # ... other imports
-from src.strategies import EngulfingStrategy, MyNewStrategy 
+# ... (in main.py)
+from src.strategies import EngulfingStrategy, SRBreakout, MyNewStrategy # example import
 
-def main():
-    # ...
-    
-    # 3. Create and list all strategies
-    print("Initializing strategies...")
-    strategy_list = [
-        EngulfingStrategy(),
-        MyNewStrategy(),
-    ]
-
-    # ...
+def get_strategies(strategy_names, instrument, timeframe):
+    """Initializes and returns a list of strategy objects based on names."""
+    all_strategies = {
+        "EngulfingStrategy": EngulfingStrategy(instrument=instrument, timeframe=timeframe),
+        "SRBreakout": SRBreakout(instrument=instrument, timeframe=timeframe),
+        "MyNewStrategy": MyNewStrategy(instrument=instrument, timeframe=timeframe), # Add it here
+        # Add any new strategies here
+    }
+# ...
 ```
 
-When you rebuild and run your Docker container, the StrategyRunner will automatically pick up and check your new strategy.
-
+When you rebuild and run your Docker container, the StrategyRunner or Backtester will automatically pick up and run your new strategy.
 
 

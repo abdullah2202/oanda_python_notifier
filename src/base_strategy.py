@@ -6,31 +6,33 @@ PIP_SIZE = 0.01
 class Strategy(ABC):
     """
     Abstract Base Class for all trading strategies.
+    Defines common attributes and the required 'check' interface.
     """
+
+    def __init__(self, instrument, timeframe):
+        # These attributes are set during initialization and are inherited by subclasses.
+        self.instrument = instrument
+        self.timeframe = timeframe
+
+        # These are default values, intended to be overwritten by the subclass 
+        # constructors (e.g., EngulfingStrategy.__init__).
+        self.required_candles = 4
+        self.min_required_completed_candles = 4
     
     @abstractmethod
-    def check(self, candles):
+    def check(self, candles: list) -> tuple[bool, str]:
+        """
+        Runs the strategy check against the list of candles. Must be implemented 
+        by all derived classes.
+        
+        Args:
+            candles: A list of candle data dictionaries.
+            
+        Returns:
+            A tuple (is_strategy_met: bool, notification_detail: str)
+        """
         # Returns (is_strategy_met: bool, notification_detail: str)
         pass
 
-    @property
-    @abstractmethod
-    def instrument(self):
-        pass
-
-    @property
-    @abstractmethod
-    def timeframe(self):
-        pass
-        
-    @property
-    @abstractmethod
-    def required_candles(self):
-        # Total number of candles to request from API
-        pass
-        
-    @property
-    @abstractmethod
-    def min_required_completed_candles(self):
-        # Minimum completed candles needed for strategy logic
-        pass
+# Removed all conflicting abstract property definitions (@property @abstractmethod)
+# as the attributes are now set in __init__ and accessed directly by subclasses.
