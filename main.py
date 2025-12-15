@@ -39,9 +39,9 @@ def main():
                         help="Operating mode: 'live' for real-time scanning or 'backtest' for simulation.")
     
     # Backtesting arguments (only required if mode is backtest)
-    parser.add_argument("--instrument", type=str, default=os.getenv("OANDA_INSTRUMENT", "EUR_USD"),
+    parser.add_argument("--instrument", type=str, default=os.getenv("OANDA_INSTRUMENT", "XAU_USD"),
                         help="Instrument to run strategies on (e.g., EUR_USD).")
-    parser.add_argument("--timeframe", type=str, default=os.getenv("OANDA_TIMEFRAME", "H1"),
+    parser.add_argument("--timeframe", type=str, default=os.getenv("OANDA_TIMEFRAME", "M30"),
                         help="Timeframe for the strategy (e.g., H1, M30).")
     parser.add_argument("--strategies", nargs='+', default=['all'],
                         help="List of strategy names to run or 'all'.")
