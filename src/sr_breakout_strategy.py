@@ -36,7 +36,7 @@ class SRBreakout(Strategy):
         
         support_levels = []
         resistance_levels = []
-        
+
         # 1. S/R Detection Loop
         for i in range(len(historical_candles) - 1):
             c_prev = historical_candles[i]
@@ -64,7 +64,12 @@ class SRBreakout(Strategy):
 
         # 2. Level Consolidation (Find the most extreme levels)
         best_support = min(support_levels) if support_levels else None
-        best_resistance = max(resistance_levels) if resistance_levels else None
+
+        # Change: Changed to min() to select the closest resistance.
+        best_resistance = min(resistance_levels) if resistance_levels else None
+        # best_resistance = max(resistance_levels) if resistance_levels else None
+
+        print(f"Support: {best_support} Resistance: {best_resistance}")
 
         # 3. Breakout Check (using the close of the breakout_candle)
         

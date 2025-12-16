@@ -34,6 +34,7 @@ class OandaConnector:
             
         r = instruments.InstrumentsCandles(instrument=instrument, params=params)
         
+
         try:
             self.client.request(r)
             # Filter for *only* completed candles
